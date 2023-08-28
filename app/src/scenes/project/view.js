@@ -17,6 +17,8 @@ ChartJS.register(...registerables);
 
 export default function ProjectView() {
   const [project, setProject] = useState(null);
+  const [open, setOpen] = useState(false);
+
   const [copied, setCopied] = React.useState(false);
   const { id } = useParams();
   const history = useHistory();
@@ -36,6 +38,10 @@ export default function ProjectView() {
 
   if (!project) return <Loader />;
 
+  async function closeModal() {
+    setOpen(false);
+  }
+
   return (
     <React.Fragment>
       <div className="pl-20 pt-24 pb-4 w-[98%]">
@@ -45,13 +51,30 @@ export default function ProjectView() {
               <span className="text-[18px] text-[#212325] font-semibold">Project details</span>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => history.push(`/project/edit/${project?._id}`)}
-                className="border !border-[#0560FD] text-[#0560FD] py-[7px] px-[20px] bg-[#FFFFFF] rounded-[16px]">
+              <button onClick={() => setOpen(true)} className="border !border-[#fd7e14] text-[#fd7e14] py-[7px] px-[20px] bg-[#FFFFFF] rounded-[16px]">
+                Financial Forecasting Tool
+              </button>
+              <button onClick={() => history.push(`/project/edit/${id}`)} className="border !border-[#0560FD] text-[#0560FD] py-[7px] px-[20px] bg-[#FFFFFF] rounded-[16px]">
                 Edit
               </button>
             </div>
           </div>
+          {open ? (
+            <div
+              className=" absolute top-0 bottom-0 left-0 right-0 bg-[#00000066] flex justify-center p-[1rem] z-50 "
+              onClick={() => {
+                setOpen(false);
+              }}>
+              <div
+                className="w-full md:w-[60%] max-h-[600px] bg-[white] p-[25px] rounded-md"
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}>
+                {/* Modal Body */}
+                <FinancialForecast closeModal={closeModal} />
+              </div>
+            </div>
+          ) : null}
           <ProjectDetails project={project} />
         </div>
       </div>
@@ -70,7 +93,7 @@ const ProjectDetails = ({ project }) => {
               <div className="flex justify-between gap-2">
                 <div className="flex gap-20">
                   <span className="w-fit text-[20px] text-[#0C1024] font-bold">Nom du projet : </span>
-                  <span className="w-fit text-[20px] text-[#0C1024] font-bold">{project.name.toString()}</span>
+                  <span className="w-fit text-[20px] text-[#0C1024] font-bold">{project.name?.toString()}</span>
                 </div>
                 <div className="flex flex-1 flex-column items-end gap-3">
                   <Links project={project} />
@@ -94,10 +117,98 @@ const ProjectDetails = ({ project }) => {
         </div>
       </div>
       <div className="flex flex-wrap p-3 gap-4"></div>
+
       <Activities project={project} />
     </div>
   );
 };
+
+const FinancialForecast = ({ closeModal }) => {
+  let [income, setIncome] = useState(0);
+  const [expenses, setExpenses] = useState(0);
+  const [growthRate, setGrowthRate] = useState(0);
+
+  const netIncomeArray = [];
+
+  const calculateForecast = () => {
+    // Assuming simple calculations for illustration purposes
+    const incomeArray = [];
+    const expensesArray = [];
+    let netIncome = 0;
+
+    incomeArray.push(income);
+    expensesArray.push(expenses);
+    netIncome += income - expenses;
+    income += (income * growthRate) / 100; // Apply growth rate
+
+    netIncomeArray.push(netIncome);
+
+    return {
+      incomeArray,
+      expensesArray,
+      netIncomeArray,
+    };
+  };
+
+  const forecastData = calculateForecast();
+
+  return (
+    <>
+      <div>
+        <div className="text-[22px] font-semibold mb-4">Financial Forecasting Tool</div>
+        <div>
+          <label>
+            Initial Income:
+            <input
+              type="number"
+              className="projectsInput text-[14px] font-normal text-[#212325] rounded-[10px]"
+              value={income}
+              onChange={(e) => setIncome(parseFloat(e.target.value))}
+            />
+          </label>
+        </div>
+        <div>
+          <label>
+            Initial Expenses:
+            <input
+              type="number"
+              className="projectsInput text-[14px] font-normal text-[#212325] rounded-[10px]"
+              value={expenses}
+              onChange={(e) => setExpenses(parseFloat(e.target.value))}
+            />
+          </label>
+        </div>
+        <div>
+          <label>
+            Growth Rate (%):
+            <input
+              type="number"
+              className="projectsInput text-[14px] font-normal text-[#212325] rounded-[10px]"
+              value={growthRate}
+              onChange={(e) => setGrowthRate(parseFloat(e.target.value))}
+            />
+          </label>
+        </div>
+
+        <button onClick={calculateForecast} className="border !border-[#0560FD] text-[#0560FD] py-[7px] px-[20px] bg-[#FFFFFF] rounded-[16px]">
+          Calculate
+        </button>
+
+        {/* Display the forecasted financial data */}
+        <div className="text-[14px] font-normal text-[#212325] mt-5">
+          <p className="text-[18px] text-[#28a745] font-semibold">Net Income Array: {forecastData.netIncomeArray.join(", ")}</p>
+          {/* You can display other financial data here, like income and expenses */}
+        </div>
+      </div>
+      <div className="text-right">
+        <button className="bg-[#1f0801] text-[#fff] py-[12px] px-[22px] w-[170px] h-[48px]	rounded-[10px] text-[16px] font-medium" onClick={() => closeModal()}>
+          Close
+        </button>
+      </div>
+    </>
+  );
+};
+
 const Budget = ({ project }) => {
   const [activities, setActivities] = useState([10, 29, 18, 12]);
 
