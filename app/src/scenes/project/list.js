@@ -8,6 +8,7 @@ import LoadingButton from "../../components/loadingButton";
 import ProgressBar from "../../components/ProgressBar";
 
 import api from "../../services/api";
+import { MdDeleteForever } from "react-icons/md";
 const ProjectList = () => {
   const [projects, setProjects] = useState(null);
   const history = useHistory();
@@ -25,6 +26,15 @@ const ProjectList = () => {
     }
   };
 
+  async function onDelete(i) {
+    if (window.confirm("Are you sure ?")) {
+      const project = projects[i];
+      await api.remove(`/project/${project._id}`);
+      toast.success(`Deleted ${project.name}`);
+      fetchProjects();
+    }
+  }
+
   if (!projects) return <Loader />;
 
   const handleSearch = (searchedValue) => {
@@ -36,13 +46,10 @@ const ProjectList = () => {
     <div className="w-full p-2 md:!px-8">
       <Create onChangeSearch={handleSearch} onFinish={fetchProjects} />
       <div className="py-3">
-        {projects.map((hit) => {
+        {projects.map((hit, i) => {
           return (
-            <div
-              key={hit._id}
-              onClick={() => history.push(`/project/${hit._id}`)}
-              className="flex justify-between flex-wrap p-3 border border-[#FFFFFF] bg-[#F9FBFD] rounded-[16px] mt-3 cursor-pointer">
-              <div className="flex w-full md:w-[25%] border-r border-[#E5EAEF]">
+            <div key={hit._id} className="flex justify-between flex-wrap p-3 border border-[#FFFFFF] bg-[#F9FBFD] rounded-[16px] mt-3 cursor-pointer">
+              <div onClick={() => history.push(`/project/${hit._id}`)} className="flex w-full md:w-[25%] border-r border-[#E5EAEF]">
                 <div className="flex flex-wrap gap-4 items-center">
                   {hit.logo && <img className="w-[85px] h-[85px] rounded-[8px] object-contain	" src={hit.logo} alt="ProjectImage.png" />}
                   <div className="flex flex-col flex-wrap flex-1">
@@ -50,12 +57,17 @@ const ProjectList = () => {
                   </div>
                 </div>
               </div>
-              <div className="w-full md:w-[50%] border-r border-[#E5EAEF] pl-[10px]">
+              <div onClick={() => history.push(`/project/${hit._id}`)} className="w-full md:w-[50%] border-r border-[#E5EAEF] pl-[10px]">
                 <span className="text-[14px] font-medium text-[#212325]">{hit.description ? hit.description : ""}</span>
               </div>
-              <div className="w-full md:w-[25%]  px-[10px]">
+              <div onClick={() => history.push(`/project/${hit._id}`)} className="w-full md:w-[15%]  px-[10px]">
                 <span className="text-[16px] font-medium text-[#212325]">Budget consumed {hit.paymentCycle === "MONTHLY" && "this month"}:</span>
                 <Budget project={hit} />
+              </div>
+              <div className="w-full md:w-[10%]  px-[10px]" style={{ margin: "auto" }}>
+                <div className={`flex justify-center cursor-pointer text-xl hover:text-red-500`}>
+                  <MdDeleteForever onClick={() => onDelete(i)} />
+                </div>
               </div>
             </div>
           );
@@ -114,6 +126,7 @@ const Create = ({ onChangeSearch, onFinish }) => {
             onChange={(e) => onChangeSearch(e.target.value)}
           />
         </div>
+
         {/* Create New Button */}
         <button
           className="bg-[#0560FD] text-[#fff] py-[12px] px-[20px] rounded-[10px] text-[16px] font-medium"
