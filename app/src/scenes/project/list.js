@@ -10,34 +10,33 @@ import ProgressBar from "../../components/ProgressBar";
 import api from "../../services/api";
 const ProjectList = () => {
   const [projects, setProjects] = useState(null);
-  const [activeProjects, setActiveProjects] = useState(null);
-
   const history = useHistory();
 
   useEffect(() => {
-    (async () => {
-      const { data: u } = await api.get("/project");
-      setProjects(u);
-    })();
+    fetchProjects(); // Initial fetch
   }, []);
 
-  useEffect(() => {
-    const p = (projects || []).filter((p) => p.status === "active");
-    setActiveProjects(p);
-  }, [projects]);
+  const fetchProjects = async () => {
+    try {
+      const { data: u } = await api.get("/project");
+      setProjects(u);
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+    }
+  };
 
-  if (!projects || !activeProjects) return <Loader />;
+  if (!projects) return <Loader />;
 
   const handleSearch = (searchedValue) => {
-    const p = (projects || []).filter((p) => p.status === "active").filter((e) => e.name.toLowerCase().includes(searchedValue.toLowerCase()));
-    setActiveProjects(p);
+    const p = projects.filter((e) => e.name.toLowerCase().includes(searchedValue.toLowerCase()));
+    setProjects(p);
   };
 
   return (
     <div className="w-full p-2 md:!px-8">
-      <Create onChangeSearch={handleSearch} />
+      <Create onChangeSearch={handleSearch} onFinish={fetchProjects} />
       <div className="py-3">
-        {activeProjects.map((hit) => {
+        {projects.map((hit) => {
           return (
             <div
               key={hit._id}
@@ -92,7 +91,7 @@ const Budget = ({ project }) => {
   return <ProgressBar percentage={width} max={budget_max_monthly} value={total} />;
 };
 
-const Create = ({ onChangeSearch }) => {
+const Create = ({ onChangeSearch, onFinish }) => {
   const [open, setOpen] = useState(false);
 
   return (
@@ -146,6 +145,7 @@ const Create = ({ onChangeSearch }) => {
                   if (!res.ok) throw res;
                   toast.success("Created!");
                   setOpen(false);
+                  onFinish(); // Refresh the project list after creating a new one
                 } catch (e) {
                   console.log(e);
                   toast.error("Some Error!", e.code);
