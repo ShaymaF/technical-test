@@ -11,15 +11,17 @@ import api from "../../services/api";
 import { MdDeleteForever } from "react-icons/md";
 const ProjectList = () => {
   const [projects, setProjects] = useState(null);
+  const [status, setStatus] = useState("");
   const history = useHistory();
 
   useEffect(() => {
     fetchProjects(); // Initial fetch
-  }, []);
+  }, [status]);
 
   const fetchProjects = async () => {
     try {
-      const { data: u } = await api.get("/project");
+      const filter = status ? "?status=" + status : "";
+      const { data: u } = await api.get("/project" + filter);
       setProjects(u);
     } catch (error) {
       console.error("Error fetching projects:", error);
@@ -41,10 +43,26 @@ const ProjectList = () => {
     const p = projects.filter((e) => e.name.toLowerCase().includes(searchedValue.toLowerCase()));
     setProjects(p);
   };
+  const filterProject = (status = 0) => {
+    switch (status) {
+      case "1":
+        setStatus("active");
+        break;
+      case "2":
+        setStatus("inactive");
+
+        break;
+
+      default:
+        setStatus("");
+
+        break;
+    }
+  };
 
   return (
     <div className="w-full p-2 md:!px-8">
-      <Create onChangeSearch={handleSearch} onFinish={fetchProjects} />
+      <Create onChangeSearch={handleSearch} onFinish={fetchProjects} filterProject={filterProject} />
       <div className="py-3">
         {projects.map((hit, i) => {
           return (
@@ -103,7 +121,7 @@ const Budget = ({ project }) => {
   return <ProgressBar percentage={width} max={budget_max_monthly} value={total} />;
 };
 
-const Create = ({ onChangeSearch, onFinish }) => {
+const Create = ({ onChangeSearch, onFinish, filterProject }) => {
   const [open, setOpen] = useState(false);
 
   return (
@@ -125,6 +143,17 @@ const Create = ({ onChangeSearch, onFinish }) => {
             placeholder="Search"
             onChange={(e) => onChangeSearch(e.target.value)}
           />
+          {/* Filter by status */}
+          <select
+            className="ml-5 w-[180px] bg-[#FFFFFF] text-[14px] text-[#212325] font-normal py-2 px-[14px] rounded-[10px] border-r-[16px] border-[transparent] cursor-pointer"
+            name="project"
+            onChange={(e) => {
+              filterProject(e.target.value);
+            }}>
+            <option value={0}>All Project</option>
+            <option value={1}>active</option>
+            <option value={2}>inactive</option>
+          </select>
         </div>
 
         {/* Create New Button */}
