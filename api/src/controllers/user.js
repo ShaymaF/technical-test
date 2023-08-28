@@ -21,7 +21,7 @@ router.get("/signin_token", passport.authenticate("user", { session: false }), (
 
 router.get("/available", passport.authenticate("user", { session: false }), async (req, res) => {
   try {
-    const users = await UserObject.find({ availability: { $ne: "not available" }, organisation: req.user.organisation }).sort("-last_login_at");
+    const users = await UserObject.find({ availability: { $ne: "not available" }, organisation: req.user.organisation }).sort("-last_login_at").select('-password');
 
     return res.status(200).send({ ok: true, data: users });
   } catch (error) {
@@ -32,7 +32,7 @@ router.get("/available", passport.authenticate("user", { session: false }), asyn
 
 router.get("/:id", passport.authenticate("user", { session: false }), async (req, res) => {
   try {
-    const data = await UserObject.findOne({ _id: req.params.id });
+    const data = await UserObject.findOne({ _id: req.params.id }).select('-password');
     return res.status(200).send({ ok: true, data });
   } catch (error) {
     console.log(error);
@@ -56,7 +56,7 @@ router.post("/", passport.authenticate("user", { session: false }), async (req, 
 
 router.get("/", passport.authenticate("user", { session: false }), async (req, res) => {
   try {
-    const users = await UserObject.find({ ...req.query, organisation: req.user.organisation }).sort("-last_login_at");
+    const users = await UserObject.find({ ...req.query, organisation: req.user.organisation }).sort("-last_login_at").select('-password');
     return res.status(200).send({ ok: true, data: users });
   } catch (error) {
     console.log(error);
